@@ -7,6 +7,8 @@ class App extends Component {
       city: "",
       weather: null,
       error: null,
+      autocompleteCities: [],
+      autocompleteErr: "",
     };
   }
 
@@ -30,8 +32,32 @@ class App extends Component {
       .catch((error) => this.setState({ error: error.message, weather: null }));
   };
 
-  handleCityNameInputChange = (event) => {
+  fetchPlace = async (text) => {
+    console.log(process.env.REACT_APP_MAP_API_KEY);
+    try {
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${text}.json?access_token=${process.env.REACT_APP_MAP_API_KEY}&cachebuster=1625641871908&autocomplete=true&types=place`
+      );
+      if (!res.ok) throw new Error(res.statusText);
+      return res.json();
+    } catch (err) {
+      return { error: "Unable to retrieve places" };
+    }
+  };
+
+  handleCityChange = async (event) => {
     this.setState({ city: event.target.value });
+
+    const { city, autocompleteCities } = this.state;
+
+    if (!city) return;
+
+    const res = await this.fetchPlace(city);
+    !autocompleteCities.includes(event.target.value) &&
+      res.features &&
+      this.setState({ autocompleteCities: res.features.map((place) => place.place_name) });
+
+    res.error ? this.setState({ autocompleteErr: res.error }) : this.setState({ autocompleteErr: "" });
   };
 
   handleWeatherDataSubmit = (event) => {
@@ -40,7 +66,7 @@ class App extends Component {
   };
 
   render() {
-    const { city, weather, error } = this.state;
+    const { city, weather, error, autocompleteCities, autocompleteErr } = this.state;
 
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
@@ -48,13 +74,30 @@ class App extends Component {
           <h1 className="text-2xl font-bold mb-4 text-center">Weather Dashboard</h1>
 
           <form className="mb-4 ">
-            <input
-              type="text"
-              value={city}
-              placeholder="Enter the city name."
-              className="border border-gray-300 rounded-lg py-2 px-4 w-full mb-4"
-              onChange={this.handleCityNameInputChange}
-            />
+            <div className="placesAutocomplete__inputWrap">
+              <label htmlFor="city" className="label">
+                Your city
+                <br />
+                {autocompleteErr && <span className="text-red-500 inputError">{autocompleteErr}</span>}
+              </label>
+              <input
+                list="places"
+                type="text"
+                id="city"
+                name="city"
+                onChange={this.handleCityChange}
+                value={city}
+                required
+                pattern={autocompleteCities.join("|")}
+                autoComplete="off"
+                className="border border-gray-300 rounded-lg py-2 px-4 w-full mb-4"
+              />
+              <datalist id="places">
+                {autocompleteCities.map((city, i) => (
+                  <option key={i}>{city}</option>
+                ))}
+              </datalist>
+            </div>
 
             <button
               type="submit"
