@@ -76,13 +76,14 @@ class App extends Component {
           <form className="mb-4 ">
             <div className="placesAutocomplete__inputWrap">
               <label htmlFor="city" className="label">
-                Your city
-                <br />
                 {autocompleteErr && <span className="text-red-500 inputError">{autocompleteErr}</span>}
               </label>
+              <br />
+
               <input
                 list="places"
                 type="text"
+                placeholder="Enter city name."
                 id="city"
                 name="city"
                 onChange={this.handleCityChange}
@@ -92,7 +93,7 @@ class App extends Component {
                 autoComplete="off"
                 className="border border-gray-300 rounded-lg py-2 px-4 w-full mb-4"
               />
-              <datalist id="places">
+              <datalist id="places" className="mt-5">
                 {autocompleteCities.map((city, i) => (
                   <option key={i}>{city}</option>
                 ))}
@@ -111,8 +112,14 @@ class App extends Component {
           {error && <p className="text-red-500 text-center">{error}</p>}
 
           {weather && (
-            <div className="text-center">
+            <div className="text-center flex items-center justify-center flex-col">
               <h2 className="text-xl font-semibold mb-2">{weather.name}</h2>
+
+              <img
+                src={"http://openweathermap.org/img/w/" + weather.weather[0].icon + ".png"}
+                className="text-center w-20 h-20"
+                alt={weather.weather[0].description}
+              />
 
               <p className="text-gray-700">Temperature: {weather.main.temp}°C</p>
               <p className="text-gray-700">Weather: {weather.weather[0].description}</p>
